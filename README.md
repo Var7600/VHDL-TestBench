@@ -6,6 +6,10 @@ A simple python script to generate a  VHDL testbench template  given an entity-a
 
 # Demo
 
+
+https://github.com/Var7600/VHDL-TestBench/assets/77991946/c12ecadf-ef14-4735-a7ea-1395e4b94f1f
+
+
 # Usage
 
 - download the python script
