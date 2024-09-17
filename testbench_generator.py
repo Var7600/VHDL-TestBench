@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # -----------------------------------------------------------------------------
 # Name:        testbench_generator
 # Purpose:     A program that  generates a testbench template of VHDL file(s)
