@@ -1,5 +1,6 @@
 # VHDL Testbench Generator
-
+# Badges
+[![unit-test python](https://github.com/Var7600/VHDL-TestBench/actions/workflows/python-app.yml/badge.svg)](https://github.com/Var7600/VHDL-TestBench/actions/workflows/python-app.yml)
 ---
 
 A simple python script to generate a  VHDL testbench template  given an entity-architecture declaration  passed as argument(s) file(s).
