@@ -4,7 +4,7 @@
 # Name:        testbench_generator
 # Purpose:     A program that  generates a testbench template of VHDL file(s)
 # passed in argument
-# python_version: 3.8.10
+# python_version: 3.12
 # Author:      DOUDOU DIAWARA
 #
 # Created:     16/02/2024
@@ -15,32 +15,34 @@
     This module generates a testbench template of a VHDL file(s) passed in Argument(s).
 
     Functions:
-    parse_file(file_name):
+    parse_file(str):
         parse the VHDL file passed in Argument.
 
-    component_interface(str):
+    component_interface(str)-> str:
         Extract the component declaration in the VHDL File(entity declaration).
 
-    remove_directional_signals(str):
+    remove_directional_signals(str) -> str :
         Remove  directional signals "in" and "out" and "buffer" from the string.
 
-    parse_signals(str):
+    parse_signals(str) -> str:
         Get the input and output signal
         and generic constant declared in the entity VHDL file.
 
-    map_signals(str):
+    map_signals(str) -> str:
         Map signals declaration to component.
 
-    write_testbench(component):
+    write_testbench(str) -> int:
         Write the testbench file of the component interface.
+        0 if successful otherwise -1
 
 """
 import sys
 import os
 import re
 
+
 class bcolors:
-    """ colors foe the terminal """
+    """ colors for the terminal """
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKCYAN = '\033[96m'
@@ -50,18 +52,20 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
-    
 
-def parse_file(file_name):
+
+def parse_file(file_name: str):
     """
         Parse the VHDL file to look for the entity declaration in the file.
 
         Args:
-            file_name (file): the VHDL file to parse.
-                if the VHDL file doesn't exit, the function will terminate.
+            file_name (str): the path to the VHDL file to parse.
+                If the VHDL file doesn't exit, the function will terminate.
 
         Returns:
             (str): the entity declaration of the VHDL file.
+            0 if the file was not found
+            -1 if a error occurred when processing the file
 
     """
     found_entity = False
@@ -87,21 +91,22 @@ def parse_file(file_name):
                       end of processing:  {file_name} """)
                 return 0
 
-        return "\n".join(entity_lines)
+            # return the entity declaration in the file
+            return "\n".join(entity_lines)
 
     except FileNotFoundError as e:
-        print( bcolors.WARNING + "Unable to open the file " + file_name + ": " + str(e) + bcolors.ENDC)
+        print(bcolors.WARNING + "Unable to open the file " + file_name + ": " + str(e) + bcolors.ENDC)
 
     except PermissionError:
-        print(bcolors.WARNING + "Permission denied! Unable to read the file."+ bcolors.ENDC)
+        print(bcolors.WARNING + "Permission denied! Unable to read the file." + bcolors.ENDC)
 
     except Exception as e:
-        print(bcolors.FAIL + f"An error occurred: {e}"+ bcolors.ENDC)
+        print(bcolors.FAIL + f"An error occurred: {e}" + bcolors.ENDC)
 
     return -1
 
 
-def component_interface(entity_lines):
+def component_interface(entity_lines: str) -> str:
     """
        Return the component of the entity declaration.
 
@@ -111,18 +116,18 @@ def component_interface(entity_lines):
         Returns:
             (str):  the component to map
     """
-    # replace entity by component  
-    entity_lines_component =  entity_lines.replace("entity", "component")
+    # replace entity by component
+    entity_lines_component = entity_lines.replace("entity", "component")
     # to check if component end with "end <entity_name>" or "end component <entity_name>"
     if "end component" not in entity_lines_component:
-        entity_lines_component = entity_lines_component.replace("end" , "end component")
-   
+        entity_lines_component = entity_lines_component.replace("end", "end component")
+
     return entity_lines_component
 
 
-def remove_directional_signals(signals):
+def remove_directional_signals(signals: str) -> str:
     """
-        Removes directional signals "in" and "out" and "buffer" from the string.
+        Removes directional signals "in" and "out" and "buffer" from the signals.
 
         Args:
             signals(str): the component interface.
@@ -140,7 +145,7 @@ def remove_directional_signals(signals):
     return " ".join(filtered_lines)
 
 
-def parse_signals(component):
+def parse_signals(component: str) -> str:
     """
     Get the input and output signals and generic constants declared in the entity VHDL file.
 
@@ -148,10 +153,11 @@ def parse_signals(component):
         component (str): The component declaration content
 
     Returns:
-        String of the VHDL signal and generic constant to define in the testbench file.
+        (str) of the VHDL signals and generic constant to define in the testbench file.
     """
 
     semicolon_newline = ";\n"
+
     # add variable type signal
     data_type_signal = []
     # extract generic constant declaration if exists
@@ -167,7 +173,7 @@ def parse_signals(component):
             generic_const = generic_const + " := 8"
 
         # declaration const generic
-        declaration_generic_const = "constant " + generic_const + semicolon_newline
+        declaration_generic_const = " constant " + generic_const + semicolon_newline
 
         data_type_signal.append(declaration_generic_const)
 
@@ -181,17 +187,17 @@ def parse_signals(component):
 
         # removing in/out/buffer directional signal
         signals = remove_directional_signals(signal_declaration)
-        signals = signals.split(";")
+        list_signals = signals.split(";")
 
-        for signal in signals:
-            data_type_signal.append("signal " + signal + semicolon_newline)
+        for signal_name in list_signals:
+            data_type_signal.append("signal " + signal_name + semicolon_newline)
 
         return " ".join(data_type_signal)
 
     return "port declaration not found in file!"
 
 
-def map_signals(signals):
+def map_signals(signals: str) -> str:
     """
         map signals declaration to component
 
@@ -201,12 +207,12 @@ def map_signals(signals):
         Returns:
             mapped_signals(str): signals mapped to the component to test
     """
-    indentation ="\t\t\t\t"
+    indentation = "\t\t\t\t"
     # signals to map to the component to test
     signals_to_map = "generic map ( "
     tmp_signals = signals.splitlines()
     # name of signal identifier
-    signal_name=""
+    signal_name = ""
     # check if there's a generic constant declaration
     generic = False
     # generic map first
@@ -229,7 +235,7 @@ def map_signals(signals):
         signals_to_map = ""
         # no indention
         indentation = ""
-        
+
     # signal map port
     signals_to_map += indentation + "port map ( "
     for signal in tmp_signals:
@@ -244,10 +250,9 @@ def map_signals(signals):
 
         elif "variable" in signal:
             signal_name = signal[len("variable") + 1:].strip()
-            
         # multiples lines variables declaration
         for name in signal_name.split(","):
-            if len(name) > 0 :
+            if len(name) > 0:
                 # append to signal to map
                 signals_to_map += name + "=>" + name + ",\n\t\t\t\t"
 
@@ -259,7 +264,7 @@ def map_signals(signals):
     return signals_to_map
 
 
-def write_testbench(entity_lines):
+def write_testbench(entity_lines: str) -> int:
     """
         Write the testbench file of the component interface.
 
@@ -293,16 +298,16 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity {entity_name}_tb is
-end entity {entity_name}_tb;
+entity {entity_name.capitalize()}_tb is
+end entity {entity_name.capitalize()}_tb;
 
 architecture Behavior of {entity_name}_tb is
 
     -- component to test
-    {component_test}
+{component_test}
 
     -- signal to map to component
-    {signals}
+{signals}
 begin
     -- map signals
     uut: {entity_name} {mapping_signals}
@@ -319,14 +324,14 @@ end architecture behaviour;
     override = False
     if os.path.exists(file_path):
         override = True
-        answer = input(bcolors.WARNING + "file " + testbench_file_name + " already exists do you want to override it?([Yes/Y/y or No/N/n]): "+ bcolors.ENDC).lower()
+        answer = input(bcolors.WARNING + "file " + testbench_file_name + " already exists do you want to override it?([Yes/Y/y or No/N/n]): " + bcolors.ENDC).lower()
     # we only need to check the value of answer when override is True
     if not (override) or answer in ("yes", "y"):
         # write the testbench file
         try:
             with open(testbench_file_name, 'w', encoding="utf-8") as writer:
                 writer.write(testbemch_template)
-                print(bcolors.OKGREEN + "GENERATED TESTBENCH! : " + file_path  + bcolors.ENDC)
+                print(bcolors.OKGREEN + "GENERATED TESTBENCH! : " + file_path + bcolors.ENDC)
         except Exception as e:
             print(bcolors.FAIL + f"An error occurred: {e}" + bcolors.ENDC)
             return -1
@@ -366,7 +371,7 @@ Examples:
                 # verify with the user if VHDL file are passed in argument
                 valid = False
                 while not valid:
-                    answer = input(bcolors.WARNING + "Are the file(s) passed as argument  VHDL file(s)? ([Yes/Y/y or No/N/n]): " +  bcolors.ENDC).lower()
+                    answer = input(bcolors.WARNING + "Are the file(s) passed as argument  VHDL file(s)? ([Yes/Y/y or No/N/n]): " + bcolors.ENDC).lower()
                     if answer in ("yes", "y"):
                         valid = True
                         # process files arguments
