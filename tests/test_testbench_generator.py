@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # Name:        test_testbench_generator
 # Purpose:     unit test for module testbench_generator
-# python_version: 3.8.10
+# python_version: 3.12
 # Author:      DOUDOU DIAWARA
 #
 # Created:     27/05/2024
@@ -22,6 +22,7 @@ class TestGlobalFunctions(unittest.TestCase):
             C : in bit;
         end adder;
         """
+
     COMPONENT_INTERFACE = """
         component test is
         port ( A : in std_logic;
