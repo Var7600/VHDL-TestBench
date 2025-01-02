@@ -22,12 +22,20 @@ jobs:
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
       with:
-        python-version: "3.10"
+        python-version: "3.12"
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 pytest
+        pip install flake8 pytest mypy
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    
+    - name: flake
+      run: flake8 testbench_generator.py
+    
+    - name: mypy
+      run:  mypy testbench_generator.py
+      
+      
     - name: Test with unittest
       run: |
         python3 -m unittest tests/test_testbench_generator.py
